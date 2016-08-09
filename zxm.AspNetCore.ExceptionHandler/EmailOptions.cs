@@ -28,14 +28,14 @@ namespace zxm.AspNetCore.ExceptionLogger
                 throw new ArgumentNullException(nameof(subject));
             }
 
-            Tos = tos;
+            To = tos;
             Subject = subject;
         }
 
         /// <summary>
         /// Email Tos
         /// </summary>
-        public IEnumerable<MailAddress> Tos { get; set; }
+        public IEnumerable<MailAddress> To { get; set; }
 
 
         /// <summary>

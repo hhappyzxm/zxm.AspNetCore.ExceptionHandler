@@ -1,5 +1,5 @@
 ﻿{
-  "version": "1.0.0",
+  "version": "1.0.4",
   "authors": [ "zxm" ],
   "description": "zxm.AspNetCore.ExceptionHandler is an extensions to log excpetion by ILogger interface.",
   "title": "zxm.AspNetCore.ExceptionHandler",
@@ -19,7 +19,8 @@
     "NETStandard.Library": "1.6.0",
     "Microsoft.Extensions.Logging": "1.0.0",
     "Microsoft.AspNetCore.Http.Abstractions": "1.0.0",
-    "zxm.MailKit": "1.0.1"
+    "zxm.MailKit": "1.0.1",
+    "Newtonsoft.Json": "9.0.1"
   },
 
   "frameworks": {

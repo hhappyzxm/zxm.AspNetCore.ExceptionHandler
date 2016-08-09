@@ -4,6 +4,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using zxm.MailKit;
+using Newtonsoft.Json;
+using System.IO;
 
 namespace zxm.AspNetCore.ExceptionLogger
 {
@@ -43,7 +45,9 @@ namespace zxm.AspNetCore.ExceptionLogger
                 // Build error message body
                 var sb = new StringBuilder();
                 sb.AppendLine("");
-                BuildErrorMessage(ex, sb);
+                GetRequestInfo(context, sb);
+                sb.AppendLine("");
+                GetErrorMessage(ex, sb);
                 var errorMessageBody = sb.ToString();
 
                 // Log error message
@@ -52,10 +56,9 @@ namespace zxm.AspNetCore.ExceptionLogger
                 // Send error email
                 if (_mailSender != null && _emailOptions != null)
                 {
-                    await
-                            _mailSender.SendEmailAsync(_emailOptions.Tos,
-                                _emailOptions.Subject,
-                                errorMessageBody);
+                    _logger.LogInformation("Has enabled the error email function, immediately began to send mail.");
+
+                    await _mailSender.SendEmailAsync(_emailOptions.To, _emailOptions.Subject, errorMessageBody);
                 }
 
                 throw;
@@ -63,20 +66,41 @@ namespace zxm.AspNetCore.ExceptionLogger
         }
 
         /// <summary>
-        /// Build error message includes inner exception messages
+        /// Get request info
+        /// </summary>
+        /// <param name="context"></param>
+        /// <param name="sb"></param>
+        private void GetRequestInfo(HttpContext context, StringBuilder sb)
+        {
+            sb.AppendLine($"Request Head: {JsonConvert.SerializeObject(context.Request.Headers)}");
+            sb.AppendLine($"Request Host: {context.Request.Host}");
+            sb.AppendLine($"Request Path: {context.Request.Path}");
+            sb.AppendLine($"Request Query String: {context.Request.QueryString}");
+
+            var bodyString = string.Empty;
+            using (var stremReader = new StreamReader(context.Request.Body, Encoding.UTF8))
+            {
+                bodyString = stremReader.ReadToEnd();
+            }
+            sb.AppendLine($"Request Body: {bodyString}");
+        }
+
+        /// <summary>
+        /// Get error message includes inner exception messages
         /// </summary>
         /// <param name="ex"></param>
         /// <param name="sb"></param>
-        private void BuildErrorMessage(Exception ex, StringBuilder sb)
+        private void GetErrorMessage(Exception ex, StringBuilder sb)
         {
             sb.AppendLine($"Message: {ex.Message}");
             sb.AppendLine($"Source: {ex.Source}");
-            sb.AppendLine($"StackTrace: {ex.StackTrace}");
+            sb.AppendLine($"StackTrace:");
+            sb.AppendLine(ex.StackTrace);
 
             if (ex.InnerException != null)
             {
                 sb.AppendLine("-------------------- InnertException --------------------");
-                BuildErrorMessage(ex.InnerException, sb);
+                GetErrorMessage(ex.InnerException, sb);
             }
         }
     }

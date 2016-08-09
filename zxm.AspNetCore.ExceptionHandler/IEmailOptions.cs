@@ -11,7 +11,7 @@ namespace zxm.AspNetCore.ExceptionLogger
         /// <summary>
         /// Email tos
         /// </summary>
-        IEnumerable<MailAddress> Tos { get; set; }
+        IEnumerable<MailAddress> To { get; set; }
 
         /// <summary>
         /// Email subject
