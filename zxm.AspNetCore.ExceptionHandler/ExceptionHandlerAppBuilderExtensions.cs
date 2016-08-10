@@ -11,11 +11,6 @@ namespace zxm.AspNetCore.ExceptionHandler
 {
     public static class ExceptionHandlerAppBuilderExtensions
     {
-        /// <summary>
-        /// Use ExceptionHandlerMiddleware
-        /// </summary>
-        /// <param name="builder"></param>
-        /// <returns></returns>
         public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app)
         {
             if (app == null)
@@ -26,36 +21,23 @@ namespace zxm.AspNetCore.ExceptionHandler
             return app.UseMiddleware<ExceptionHandlerMiddleware>();
         }
 
-        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, IList<MailAddress> to, string subject)
+        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, IList<MailAddress> to, string subject, IMailSender mailSender)
         {
             if (app == null)
             {
                 throw new ArgumentNullException(nameof(app));
             }
 
-            var options = new ExceptionHandlerOptions { To = to, Subject = subject };
-            return app.UseMiddleware<ExceptionHandlerMiddleware>(Options.Create(options));
-        }
-
-        /// <summary>
-        /// Allow send email when catch exception
-        /// </summary>
-        /// <param name="services"></param>
-        /// <param name="to"></param>
-        /// <param name="subject"></param>
-        /// <param name="mailSenderFunc"></param>
-        /// <returns></returns>
-        public static IServiceCollection AddExceptionHandler(this IServiceCollection services, string subject, Func<IMailSender> mailSenderFunc)
-        {
-            if (mailSenderFunc == null)
+            var options = new ExceptionHandlerOptions
             {
-                throw new ArgumentNullException(nameof(mailSenderFunc));
-            }
-
-            services.AddSingleton(provider => new ExceptionHandlerOptions { To = to, Subject = subject});
-            services.AddSingleton(provider => mailSenderFunc());
-
-            return services;
+                EmailOptions = new EmailOptions
+                {
+                    To = to,
+                    Subject = subject,
+                    Sender = mailSender
+                }
+            };
+            return app.UseMiddleware<ExceptionHandlerMiddleware>(Options.Create(options));
         }
     }
 }

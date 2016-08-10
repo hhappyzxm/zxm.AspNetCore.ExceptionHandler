@@ -6,29 +6,8 @@ using zxm.MailKit;
 
 namespace zxm.AspNetCore.ExceptionHandler
 {
-    /// <summary>
-    /// EmailOptions
-    /// </summary>
-    public class ExceptionHandlerOptions : IExceptionHandlerOptions
+    public class ExceptionHandlerOptions
     {
-        /// <summary>
-        /// Constructor of EmailOptions
-        /// </summary>
-        /// <param name="tos"></param>
-        /// <param name="subject"></param>
-        public ExceptionHandlerOptions()
-        {
-        }
-
-        /// <summary>
-        /// Email Tos
-        /// </summary>
-        public IEnumerable<MailAddress> To { get; set; }
-
-
-        /// <summary>
-        /// Email subject
-        /// </summary>
-        public string Subject { get; set; }
+        public EmailOptions EmailOptions { get; set; }
     }
 }
