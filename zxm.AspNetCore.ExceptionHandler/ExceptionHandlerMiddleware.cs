@@ -7,7 +7,7 @@ using zxm.MailKit;
 using Newtonsoft.Json;
 using System.IO;
 
-namespace zxm.AspNetCore.ExceptionLogger
+namespace zxm.AspNetCore.ExceptionHandler
 {
     /// <summary>
     /// ExceptionLoggerMiddleware
@@ -17,7 +17,7 @@ namespace zxm.AspNetCore.ExceptionLogger
         private readonly RequestDelegate _next;
         private readonly ILogger _logger;
         private readonly IMailSender _mailSender;
-        private readonly IEmailOptions _emailOptions;
+        private readonly IExceptionHandlerOptions _options;
 
         /// <summary>
         /// Constructor of ExceptionLoggerMiddleware
@@ -26,12 +26,12 @@ namespace zxm.AspNetCore.ExceptionLogger
         /// <param name="logger"></param>
         /// <param name="emailOptions"></param>
         /// <param name="emailSender"></param>
-        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger = null, IEmailOptions emailOptions = null, IMailSender mailSender = null)
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger = null, IExceptionHandlerOptions options = null, IMailSender mailSender = null)
         {
             _next = next;
             _logger = logger;
             _mailSender = mailSender;
-            _emailOptions = emailOptions;
+            _options = options;
         }
 
         public async Task Invoke(HttpContext context)
@@ -46,13 +46,13 @@ namespace zxm.AspNetCore.ExceptionLogger
 
                 LogError(errMessage);
                 
-                if (_mailSender != null && _emailOptions != null)
+                if (_mailSender != null && _options != null)
                 {
                     Task.Run(() =>
                     {
                         try
                         {
-                            _mailSender.SendEmail(_emailOptions.To, _emailOptions.Subject, errMessage);
+                            _mailSender.SendEmail(_options.To, _options.Subject, errMessage);
                         }
                         catch (Exception emailException)
                         {

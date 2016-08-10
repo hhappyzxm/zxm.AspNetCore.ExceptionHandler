@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using zxm.MailKit;
 
-namespace zxm.AspNetCore.ExceptionLogger
+namespace zxm.AspNetCore.ExceptionHandler
 {
     /// <summary>
     /// Email Options
     /// </summary>
-    public interface IEmailOptions
+    public interface IExceptionHandlerOptions
     {
         /// <summary>
         /// Email tos

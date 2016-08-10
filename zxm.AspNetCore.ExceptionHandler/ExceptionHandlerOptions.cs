@@ -4,23 +4,23 @@ using System.Linq;
 using System.Threading.Tasks;
 using zxm.MailKit;
 
-namespace zxm.AspNetCore.ExceptionLogger
+namespace zxm.AspNetCore.ExceptionHandler
 {
     /// <summary>
     /// EmailOptions
     /// </summary>
-    public class EmailOptions : IEmailOptions
+    public class ExceptionHandlerOptions : IExceptionHandlerOptions
     {
         /// <summary>
         /// Constructor of EmailOptions
         /// </summary>
         /// <param name="tos"></param>
         /// <param name="subject"></param>
-        public EmailOptions(IEnumerable<MailAddress> tos, string subject)
+        public ExceptionHandlerOptions(IEnumerable<MailAddress> to, string subject)
         {
-            if (tos == null)
+            if (to == null)
             {
-                throw new ArgumentNullException(nameof(tos));
+                throw new ArgumentNullException(nameof(to));
             }
 
             if (string.IsNullOrEmpty(subject))
@@ -28,7 +28,7 @@ namespace zxm.AspNetCore.ExceptionLogger
                 throw new ArgumentNullException(nameof(subject));
             }
 
-            To = tos;
+            To = to;
             Subject = subject;
         }
 

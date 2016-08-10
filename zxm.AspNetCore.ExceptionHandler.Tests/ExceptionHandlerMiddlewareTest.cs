@@ -10,7 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using zxm.MailKit;
-using zxm.AspNetCore.ExceptionLogger;
+using zxm.AspNetCore.ExceptionHandler;
 
 namespace zxm.AspNetCore.ExceptionLogger.Tests
 {

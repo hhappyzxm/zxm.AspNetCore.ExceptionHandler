@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using zxm.MailKit;
 
-namespace zxm.AspNetCore.ExceptionLogger
+namespace zxm.AspNetCore.ExceptionHandler
 {
     public static class ExceptionHandler
     {
@@ -24,19 +24,19 @@ namespace zxm.AspNetCore.ExceptionLogger
         /// Allow send email when catch exception
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="tos"></param>
+        /// <param name="to"></param>
         /// <param name="subject"></param>
         /// <param name="mailSenderFunc"></param>
         /// <returns></returns>
-        public static IServiceCollection AddExceptionHandler(this IServiceCollection services, IList<MailAddress> tos, string subject, Func<IMailSender> mailSenderFunc)
+        public static IServiceCollection AddExceptionHandler(this IServiceCollection services, IList<MailAddress> to, string subject, Func<IMailSender> mailSenderFunc)
         {
             if (mailSenderFunc == null)
             {
                 throw new ArgumentNullException(nameof(mailSenderFunc));
             }
 
-            services.AddSingleton<IEmailOptions>(provider => new EmailOptions(tos, subject));
-            services.AddSingleton<IMailSender>(provider => mailSenderFunc());
+            services.AddSingleton(provider => new ExceptionHandlerOptions(to, subject));
+            services.AddSingleton(provider => mailSenderFunc());
 
             return services;
         }
