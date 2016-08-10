@@ -56,7 +56,7 @@ namespace zxm.AspNetCore.ExceptionLogger
                         }
                         catch (Exception emailException)
                         {
-                            LogError(BuildErrorMessage(emailException, context));
+                            LogError(BuildErrorMessage(emailException));
                         }
                     });
                 }
@@ -83,13 +83,16 @@ namespace zxm.AspNetCore.ExceptionLogger
         /// <param name="ex"></param>
         /// <param name="context"></param>
         /// <returns></returns>
-        private string BuildErrorMessage(Exception ex, HttpContext context)
+        private string BuildErrorMessage(Exception ex, HttpContext context = null)
         {
             var sb = new StringBuilder();
             sb.AppendLine("");
-            GetRequestInfo(context, sb);
-            sb.AppendLine("");
             GetErrorMessage(ex, sb);
+            if (context != null)
+            {
+                sb.AppendLine("-------------------- Request Infomation --------------------");
+                GetRequestInfo(context, sb);
+            }
             return sb.ToString();
         }
 
