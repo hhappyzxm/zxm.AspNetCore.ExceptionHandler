@@ -56,20 +56,26 @@ namespace zxm.AspNetCore.ExceptionHandler
             }
             catch (Exception ex)
             {
+                Logger.LogInformation("Has already catched exception.");
+
                 var errMessage = BuildErrorMessage(ex, context);
 
                 Logger.LogError(errMessage);
-                
+
                 if (Options.EmailOptions != null)
                 {
                     Task.Run(() =>
                     {
+
                         try
                         {
+                            Logger.LogInformation("Send error email.");
                             Options.EmailOptions.Sender.SendEmail(Options.EmailOptions.To, Options.EmailOptions.Subject, errMessage);
+                            Logger.LogInformation("Send error email finished.");
                         }
                         catch (Exception emailException)
                         {
+                            Logger.LogInformation("Send error email failed.");
                             Logger.LogError(BuildErrorMessage(emailException));
                         }
                     });
