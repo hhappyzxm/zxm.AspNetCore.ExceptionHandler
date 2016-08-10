@@ -16,20 +16,8 @@ namespace zxm.AspNetCore.ExceptionHandler
         /// </summary>
         /// <param name="tos"></param>
         /// <param name="subject"></param>
-        public ExceptionHandlerOptions(IEnumerable<MailAddress> to, string subject)
+        public ExceptionHandlerOptions()
         {
-            if (to == null)
-            {
-                throw new ArgumentNullException(nameof(to));
-            }
-
-            if (string.IsNullOrEmpty(subject))
-            {
-                throw new ArgumentNullException(nameof(subject));
-            }
-
-            To = to;
-            Subject = subject;
         }
 
         /// <summary>

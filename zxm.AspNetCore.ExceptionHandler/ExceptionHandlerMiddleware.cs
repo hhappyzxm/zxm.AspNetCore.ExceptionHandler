@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using zxm.MailKit;
 using Newtonsoft.Json;
 using System.IO;
+using Microsoft.Extensions.Options;
 
 namespace zxm.AspNetCore.ExceptionHandler
 {
@@ -15,9 +16,6 @@ namespace zxm.AspNetCore.ExceptionHandler
     public class ExceptionHandlerMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ILogger _logger;
-        private readonly IMailSender _mailSender;
-        private readonly IExceptionHandlerOptions _options;
 
         /// <summary>
         /// Constructor of ExceptionLoggerMiddleware
@@ -26,13 +24,40 @@ namespace zxm.AspNetCore.ExceptionHandler
         /// <param name="logger"></param>
         /// <param name="emailOptions"></param>
         /// <param name="emailSender"></param>
-        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger = null, IExceptionHandlerOptions options = null, IMailSender mailSender = null)
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILoggerFactory loggerFactory, IOptions<ExceptionHandlerOptions> options = null, IMailSender mailSender = null)
         {
+            if (loggerFactory == null)
+            {
+                throw new ArgumentNullException(nameof(loggerFactory));
+            }
+
+            Logger = Logger = loggerFactory.CreateLogger(this.GetType().FullName);
+
+            Options = options.Value;
+            if (Options != null)
+            {
+                if (Options.To == null)
+                {
+                    throw new ArgumentNullException(nameof(Options.To));
+                }
+
+                if (string.IsNullOrEmpty(Options.Subject))
+                {
+                    throw new ArgumentNullException(nameof(Options.Subject));
+                }
+
+            }
+
+            MailSender = mailSender;
+
             _next = next;
-            _logger = logger;
-            _mailSender = mailSender;
-            _options = options;
         }
+
+        public ExceptionHandlerOptions Options { get; set; }
+
+        public ILogger Logger { get; set; }
+
+        public IMailSender MailSender { get; set; }
 
         public async Task Invoke(HttpContext context)
         {
@@ -46,13 +71,13 @@ namespace zxm.AspNetCore.ExceptionHandler
 
                 LogError(errMessage);
                 
-                if (_mailSender != null && _options != null)
+                if (MailSender != null && Options != null)
                 {
                     Task.Run(() =>
                     {
                         try
                         {
-                            _mailSender.SendEmail(_options.To, _options.Subject, errMessage);
+                            MailSender.SendEmail(Options.To, Options.Subject, errMessage);
                         }
                         catch (Exception emailException)
                         {
@@ -71,10 +96,7 @@ namespace zxm.AspNetCore.ExceptionHandler
         /// <param name="message"></param>
         private void LogError(string message)
         {
-            if (_logger != null)
-            {
-                _logger.LogError(message);
-            }
+            Logger.LogError(message);
         }
 
         /// <summary>
