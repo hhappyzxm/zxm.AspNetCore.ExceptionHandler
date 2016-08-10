@@ -20,6 +20,11 @@ namespace zxm.AspNetCore.ExceptionHandler
                 throw new ArgumentNullException(nameof(loggerFactory));
             }
 
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
             Logger = Logger = loggerFactory.CreateLogger(this.GetType().FullName);
 
             Options = options.Value;
@@ -56,29 +61,21 @@ namespace zxm.AspNetCore.ExceptionHandler
             }
             catch (Exception ex)
             {
-                Logger.LogInformation("Has already catched exception.");
+                Logger.LogError(0, ex, "An unhandled exception has occurred: " + ex.Message);
 
                 var errMessage = BuildErrorMessage(ex, context);
-
                 Logger.LogError(errMessage);
 
-                if (Options.EmailOptions != null)
-                {
-                    Task.Run(() =>
-                    {
+                if (Options.EmailOptions == null) throw;
 
-                        try
-                        {
-                            Logger.LogInformation("Send error email.");
-                            Options.EmailOptions.Sender.SendEmail(Options.EmailOptions.To, Options.EmailOptions.Subject, errMessage);
-                            Logger.LogInformation("Send error email finished.");
-                        }
-                        catch (Exception emailException)
-                        {
-                            Logger.LogInformation("Send error email failed.");
-                            Logger.LogError(BuildErrorMessage(emailException));
-                        }
-                    });
+                try
+                {
+                    await Options.EmailOptions.Sender.SendEmailAsync(Options.EmailOptions.To, Options.EmailOptions.Subject, errMessage);
+                }
+                catch (Exception ex2)
+                {
+                    Logger.LogError(0, ex2, "An unhandled exception has occurred during send error email: " + ex2.Message);
+                    Logger.LogError(BuildErrorMessage(ex2));
                 }
 
                 throw;
@@ -88,7 +85,7 @@ namespace zxm.AspNetCore.ExceptionHandler
         private string BuildErrorMessage(Exception ex, HttpContext context = null)
         {
             var sb = new StringBuilder();
-            sb.AppendLine("");
+            sb.AppendLine("-------------------- Exception Details --------------------");
             GetErrorMessage(ex, sb);
             if (context != null)
             {
