@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using Xunit;
 using zxm.MailKit;
+using zxm.AspNetCore.ExceptionLogger;
 
 namespace zxm.AspNetCore.ExceptionLogger.Tests
 {
@@ -27,6 +28,7 @@ namespace zxm.AspNetCore.ExceptionLogger.Tests
                     () =>
                     {
                         emailSenderMock = new Mock<IMailSender>();
+                        emailSenderMock.Setup(p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>())).Throws<NotImplementedException>();
                         return emailSenderMock.Object;
                     }
                     );
@@ -45,7 +47,7 @@ namespace zxm.AspNetCore.ExceptionLogger.Tests
                 await Assert.ThrowsAsync<Exception>(async () => await testServer.CreateRequest("/").GetAsync());
 
                 emailSenderMock.Verify(
-                        p => p.SendEmailAsync(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                        p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             }
         }
     }

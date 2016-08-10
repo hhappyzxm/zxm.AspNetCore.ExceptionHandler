@@ -26,7 +26,7 @@ namespace zxm.AspNetCore.ExceptionLogger
         /// <param name="logger"></param>
         /// <param name="emailOptions"></param>
         /// <param name="emailSender"></param>
-        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger, IEmailOptions emailOptions = null, IMailSender mailSender = null)
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILogger<ExceptionHandlerMiddleware> logger = null, IEmailOptions emailOptions = null, IMailSender mailSender = null)
         {
             _next = next;
             _logger = logger;
@@ -42,27 +42,55 @@ namespace zxm.AspNetCore.ExceptionLogger
             }
             catch (Exception ex)
             {
-                // Build error message body
-                var sb = new StringBuilder();
-                sb.AppendLine("");
-                GetRequestInfo(context, sb);
-                sb.AppendLine("");
-                GetErrorMessage(ex, sb);
-                var errorMessageBody = sb.ToString();
+                var errMessage = BuildErrorMessage(ex, context);
 
-                // Log error message
-                _logger.LogError(errorMessageBody);
-
-                // Send error email
+                LogError(errMessage);
+                
                 if (_mailSender != null && _emailOptions != null)
                 {
-                    _logger.LogInformation("Has enabled the error email function, immediately began to send mail.");
-
-                    await _mailSender.SendEmailAsync(_emailOptions.To, _emailOptions.Subject, errorMessageBody);
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            _mailSender.SendEmail(_emailOptions.To, _emailOptions.Subject, errMessage);
+                        }
+                        catch (Exception emailException)
+                        {
+                            LogError(BuildErrorMessage(emailException, context));
+                        }
+                    });
                 }
 
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Log error if _logger is not null
+        /// </summary>
+        /// <param name="message"></param>
+        private void LogError(string message)
+        {
+            if (_logger != null)
+            {
+                _logger.LogError(message);
+            }
+        }
+
+        /// <summary>
+        /// Build error message
+        /// </summary>
+        /// <param name="ex"></param>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        private string BuildErrorMessage(Exception ex, HttpContext context)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("");
+            GetRequestInfo(context, sb);
+            sb.AppendLine("");
+            GetErrorMessage(ex, sb);
+            return sb.ToString();
         }
 
         /// <summary>
