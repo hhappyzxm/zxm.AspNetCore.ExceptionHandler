@@ -26,37 +26,35 @@ namespace zxm.AspNetCore.ExceptionHandler
                 throw new ArgumentNullException(nameof(loggerFactory));
             }
 
-            if (options == null)
+            Logger = loggerFactory.CreateLogger(this.GetType().FullName);
+
+            if (options != null)
             {
-                throw new ArgumentNullException(nameof(options));
-            }
-
-            Logger = Logger = loggerFactory.CreateLogger(this.GetType().FullName);
-
-            Options = options.Value;
-            if (Options?.MailOptions != null)
-            {
-                if (Options.MailOptions.To == null)
+                Options = options.Value;
+                if (Options.MailOptions != null)
                 {
-                    throw new ArgumentNullException(nameof(Options.MailOptions.To));
-                }
+                    if (Options.MailOptions.To == null)
+                    {
+                        throw new ArgumentNullException(nameof(Options.MailOptions.To));
+                    }
 
-                if (Options.MailOptions.To.Count() == 0)
-                {
-                    throw new Exception("At lease has one email to address.");
-                }
+                    if (Options.MailOptions.To.Count() == 0)
+                    {
+                        throw new Exception("At lease has one email to address.");
+                    }
 
-                if (string.IsNullOrEmpty(Options.MailOptions.Subject))
-                {
-                    throw new ArgumentNullException(nameof(Options.MailOptions.Subject));
-                }
+                    if (string.IsNullOrEmpty(Options.MailOptions.Subject))
+                    {
+                        throw new ArgumentNullException(nameof(Options.MailOptions.Subject));
+                    }
 
-                if (mailSender == null)
-                {
-                    throw new ArgumentNullException(nameof(mailSender));
-                }
+                    if (mailSender == null)
+                    {
+                        throw new ArgumentNullException(nameof(mailSender));
+                    }
 
-                MailSender = mailSender;
+                    MailSender = mailSender;
+                }
             }
 
             _next = next;
@@ -81,7 +79,7 @@ namespace zxm.AspNetCore.ExceptionHandler
                 var errMessage = BuildErrorMessage(ex, context);
                 Logger.LogError(errMessage);
 
-                if (Options.MailOptions != null && MailSender != null)
+                if (Options?.MailOptions != null && MailSender != null)
                 {
                     try
                     {
