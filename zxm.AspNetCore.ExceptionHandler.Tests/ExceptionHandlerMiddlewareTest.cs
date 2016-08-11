@@ -12,7 +12,7 @@ using Xunit;
 using zxm.MailKit;
 using zxm.AspNetCore.ExceptionHandler;
 
-namespace zxm.AspNetCore.ExceptionLogger.Tests
+namespace zxm.AspNetCore.ExceptionHandler.Tests
 {
     public class ExceptionHandlerMiddlewareTest
     {
@@ -22,20 +22,11 @@ namespace zxm.AspNetCore.ExceptionLogger.Tests
             Mock<IMailSender> emailSenderMock = null;
 
             var hostBuilder = new WebHostBuilder();
-            hostBuilder.ConfigureServices(services =>
-            {
-                services.AddExceptionHandler(new List<MailAddress> { new MailAddress("123@test.com"), new MailAddress("246@test.com") }, "Test Error",
-                    () =>
-                    {
-                        emailSenderMock = new Mock<IMailSender>();
-                        emailSenderMock.Setup(p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>())).Throws<NotImplementedException>();
-                        return emailSenderMock.Object;
-                    }
-                    );
-            });
             hostBuilder.Configure(app =>
             {
-                app.UseExceptionHandler();
+                emailSenderMock = new Mock<IMailSender>();
+                emailSenderMock.Setup(p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>())).Throws<NotImplementedException>();
+                app.UseExceptionHandler(new List<MailAddress> { new MailAddress("123@test.com"), new MailAddress("246@test.com") }, "Test Error", emailSenderMock.Object);
                 app.Run(context =>
                 {
                     throw new Exception("Server Error");
