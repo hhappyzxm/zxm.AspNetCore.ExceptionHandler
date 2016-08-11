@@ -3,23 +3,17 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using zxm.MailKit;
 using Newtonsoft.Json;
 using System.IO;
-using System.Linq;
 using Microsoft.Extensions.Options;
-using zxm.MailKit.Abstractions;
 
 namespace zxm.AspNetCore.ExceptionHandler
 {
-    /// <summary>
-    /// ExceptionLoggerMiddleware
-    /// </summary>
     public class ExceptionHandlerMiddleware
     {
         private readonly RequestDelegate _next;
         
-        public ExceptionHandlerMiddleware(RequestDelegate next, ILoggerFactory loggerFactory, IOptions<ExceptionHandlerOptions> options = null, IMailSender mailSender = null)
+        public ExceptionHandlerMiddleware(RequestDelegate next, ILoggerFactory loggerFactory, IOptions<ExceptionHandlerOptions> options = null)
         {
             if (loggerFactory == null)
             {
@@ -34,29 +28,22 @@ namespace zxm.AspNetCore.ExceptionHandler
             Logger = Logger = loggerFactory.CreateLogger(this.GetType().FullName);
 
             Options = options.Value;
-            if (Options?.MailOptions != null)
+            if (Options.EmailOptions != null)
             {
-                if (Options.MailOptions.To == null)
+                if (Options.EmailOptions.To == null)
                 {
-                    throw new ArgumentNullException(nameof(Options.MailOptions.To));
+                    throw new ArgumentNullException(nameof(Options.EmailOptions.To));
                 }
 
-                if (Options.MailOptions.To.Count() == 0)
+                if (string.IsNullOrEmpty(Options.EmailOptions.Subject))
                 {
-                    throw new Exception("At lease has one email to address.");
+                    throw new ArgumentNullException(nameof(Options.EmailOptions.Subject));
                 }
 
-                if (string.IsNullOrEmpty(Options.MailOptions.Subject))
+                if (Options.EmailOptions.Sender == null)
                 {
-                    throw new ArgumentNullException(nameof(Options.MailOptions.Subject));
+                    throw new ArgumentNullException(nameof(Options.EmailOptions.Sender));
                 }
-
-                if (mailSender == null)
-                {
-                    throw new ArgumentNullException(nameof(mailSender));
-                }
-
-                MailSender = mailSender;
             }
 
             _next = next;
@@ -65,8 +52,6 @@ namespace zxm.AspNetCore.ExceptionHandler
         public ExceptionHandlerOptions Options { get; set; }
 
         public ILogger Logger { get; set; }
-
-        public IMailSender MailSender { get; set; }
 
         public async Task Invoke(HttpContext context)
         {
@@ -81,23 +66,22 @@ namespace zxm.AspNetCore.ExceptionHandler
                 var errMessage = BuildErrorMessage(ex, context);
                 Logger.LogError(errMessage);
 
-                if (Options.MailOptions != null && MailSender != null)
+                if (Options.EmailOptions == null) throw;
+
+                try
                 {
-                    try
-                    {
-                        await MailSender.SendEmailAsync(Options.MailOptions.To, Options.MailOptions.Subject, errMessage);
-                    }
-                    catch (Exception ex2)
-                    {
-                        Logger.LogError(0, ex2, "An unhandled exception has occurred during send error email: " + ex2.Message);
-                        Logger.LogError(BuildErrorMessage(ex2));
-                    }
+                    await Options.EmailOptions.Sender.SendEmailAsync(Options.EmailOptions.To, Options.EmailOptions.Subject, errMessage);
+                }
+                catch (Exception ex2)
+                {
+                    Logger.LogError(0, ex2, "An unhandled exception has occurred during send error email: " + ex2.Message);
+                    Logger.LogError(BuildErrorMessage(ex2));
                 }
 
                 throw;
             }
         }
-
+        
         private string BuildErrorMessage(Exception ex, HttpContext context = null)
         {
             var sb = new StringBuilder();
@@ -110,7 +94,7 @@ namespace zxm.AspNetCore.ExceptionHandler
             }
             return sb.ToString();
         }
-
+        
         private void GetRequestInfo(HttpContext context, StringBuilder sb)
         {
             sb.AppendLine($"Request Head: {JsonConvert.SerializeObject(context.Request.Headers)}");
@@ -125,7 +109,7 @@ namespace zxm.AspNetCore.ExceptionHandler
             }
             sb.AppendLine($"Request Body: {bodyString}");
         }
-
+        
         private void GetErrorMessage(Exception ex, StringBuilder sb)
         {
             sb.AppendLine($"Message: {ex.Message}");

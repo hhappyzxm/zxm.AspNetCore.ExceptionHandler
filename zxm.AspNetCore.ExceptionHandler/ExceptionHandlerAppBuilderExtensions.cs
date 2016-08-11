@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using zxm.MailKit;
 using Microsoft.Extensions.Options;
-using zxm.MailKit.Abstractions;
 
 namespace zxm.AspNetCore.ExceptionHandler
 {
@@ -18,15 +21,22 @@ namespace zxm.AspNetCore.ExceptionHandler
             return app.UseMiddleware<ExceptionHandlerMiddleware>();
         }
 
-        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, IList<MailAddress> to,
-            string subject)
+        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, IList<MailAddress> to, string subject, IMailSender mailSender)
         {
             if (app == null)
             {
                 throw new ArgumentNullException(nameof(app));
             }
 
-            var options = new ExceptionHandlerOptions {MailOptions = new MailOptions {Subject = subject, To = to}};
+            var options = new ExceptionHandlerOptions
+            {
+                EmailOptions = new EmailOptions
+                {
+                    To = to,
+                    Subject = subject,
+                    Sender = mailSender
+                }
+            };
             return app.UseMiddleware<ExceptionHandlerMiddleware>(Options.Create(options));
         }
     }

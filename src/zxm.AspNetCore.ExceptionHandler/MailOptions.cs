@@ -7,11 +7,10 @@ using zxm.MailKit.Abstractions;
 
 namespace zxm.AspNetCore.ExceptionHandler
 {
-    /// <summary>
-    /// EmailOptions
-    /// </summary>
-    public class ExceptionHandlerOptions
+    public class MailOptions
     {
-        public MailOptions MailOptions { get; set; }
+        public string Subject { get; set; }
+
+        public IEnumerable<MailAddress> To { get; set; }
     }
 }

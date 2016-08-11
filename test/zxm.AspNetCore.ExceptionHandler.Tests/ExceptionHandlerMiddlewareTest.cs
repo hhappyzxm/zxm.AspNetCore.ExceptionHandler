@@ -11,6 +11,7 @@ using Moq;
 using Xunit;
 using zxm.MailKit;
 using zxm.AspNetCore.ExceptionHandler;
+using zxm.MailKit.Abstractions;
 
 namespace zxm.AspNetCore.ExceptionHandler.Tests
 {
@@ -22,11 +23,15 @@ namespace zxm.AspNetCore.ExceptionHandler.Tests
             Mock<IMailSender> emailSenderMock = null;
 
             var hostBuilder = new WebHostBuilder();
-            hostBuilder.Configure(app =>
+            hostBuilder.ConfigureServices(collection =>
             {
                 emailSenderMock = new Mock<IMailSender>();
                 emailSenderMock.Setup(p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>())).Throws<NotImplementedException>();
-                app.UseExceptionHandler(new List<MailAddress> { new MailAddress("123@test.com"), new MailAddress("246@test.com") }, "Test Error", emailSenderMock.Object);
+                collection.AddSingleton<IMailSender>(provider => emailSenderMock.Object);
+            });
+            hostBuilder.Configure(app =>
+            {
+                app.UseExceptionHandler(new List<MailAddress> { new MailAddress {Address = "123@test.com" }, new MailAddress {Address = "246@test.com" } }, "Test Error");
                 app.Run(context =>
                 {
                     throw new Exception("Server Error");
@@ -38,7 +43,7 @@ namespace zxm.AspNetCore.ExceptionHandler.Tests
                 await Assert.ThrowsAsync<Exception>(async () => await testServer.CreateRequest("/").GetAsync());
 
                 emailSenderMock.Verify(
-                        p => p.SendEmail(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
+                        p => p.SendEmailAsync(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);
             }
         }
     }
