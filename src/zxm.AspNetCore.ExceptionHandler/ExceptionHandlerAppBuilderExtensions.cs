@@ -27,6 +27,34 @@ namespace zxm.AspNetCore.ExceptionHandler
             }
 
             var options = new ExceptionHandlerOptions {MailOptions = new MailOptions {Subject = subject, To = to}};
+
+            return UseExceptionHandler(app, options);
+        }
+
+        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, Action<Exception> manualProcess)
+        {
+            if (app == null)
+            {
+                throw new ArgumentNullException(nameof(app));
+            }
+
+            var options = new ExceptionHandlerOptions { ManualProcess = manualProcess};
+
+            return UseExceptionHandler(app, options);
+        }
+
+        public static IApplicationBuilder UseExceptionHandler(this IApplicationBuilder app, ExceptionHandlerOptions options)
+        {
+            if (app == null)
+            {
+                throw new ArgumentNullException(nameof(app));
+            }
+
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+            
             return app.UseMiddleware<ExceptionHandlerMiddleware>(Options.Create(options));
         }
     }

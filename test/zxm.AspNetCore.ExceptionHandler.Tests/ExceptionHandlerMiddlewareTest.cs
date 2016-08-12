@@ -21,6 +21,7 @@ namespace zxm.AspNetCore.ExceptionHandler.Tests
         public async Task TestExceptionLogger()
         {
             Mock<IMailSender> emailSenderMock = null;
+            int processManualTimes = 0;
 
             var hostBuilder = new WebHostBuilder();
             hostBuilder.ConfigureServices(collection =>
@@ -31,7 +32,19 @@ namespace zxm.AspNetCore.ExceptionHandler.Tests
             });
             hostBuilder.Configure(app =>
             {
-                app.UseExceptionHandler(new List<MailAddress> { new MailAddress {Address = "123@test.com" }, new MailAddress {Address = "246@test.com" } }, "Test Error");
+                var options = new ExceptionHandlerOptions();
+                options.MailOptions = new MailOptions
+                {
+                    To = new List<MailAddress> { new MailAddress { Address = "123@test.com" }, new MailAddress { Address = "246@test.com" } },
+                    Subject = "Test Error"
+                };
+
+                options.ManualProcess = exception =>
+                {
+                    processManualTimes++;
+                };
+
+                app.UseExceptionHandler(options);
                 app.Run(context =>
                 {
                     throw new Exception("Server Error");
@@ -41,6 +54,8 @@ namespace zxm.AspNetCore.ExceptionHandler.Tests
             using (var testServer = new TestServer(hostBuilder))
             {
                 await Assert.ThrowsAsync<Exception>(async () => await testServer.CreateRequest("/").GetAsync());
+
+                Assert.Equal(1, processManualTimes);
 
                 emailSenderMock.Verify(
                         p => p.SendEmailAsync(It.IsAny<IEnumerable<MailAddress>>(), It.IsAny<string>(), It.IsAny<string>()), Times.Once);

@@ -13,5 +13,7 @@ namespace zxm.AspNetCore.ExceptionHandler
     public class ExceptionHandlerOptions
     {
         public MailOptions MailOptions { get; set; }
+
+        public Action<Exception> ManualProcess { get; set; }
     }
 }

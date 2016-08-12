@@ -79,6 +79,8 @@ namespace zxm.AspNetCore.ExceptionHandler
                 var errMessage = BuildErrorMessage(ex, context);
                 Logger.LogError(errMessage);
 
+                Options.ManualProcess?.Invoke(ex);
+
                 if (Options?.MailOptions != null && MailSender != null)
                 {
                     try
